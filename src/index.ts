@@ -1,7 +1,9 @@
 import { Request, Response, route } from './httpSupport'
-
 import OpenAI from 'openai'
-import { toolsDescription, availableTools } from './tools'
+
+import { GenUIToolsDescription, GenUIAvailableTools } from './genuiTools'
+import { APICallerToolsDescription, APICallerAvailableTools } from './apicallerTools'
+import { ReturnResponse, Status } from './outputSchema'
 
 type MessageInfo = {
     role: any,
@@ -9,48 +11,98 @@ type MessageInfo = {
     name?: any,
 }
 
-const messages: MessageInfo[] = [
-    {
-        role: "system",
-        content: `You are a helpful assistant. Only use the functions you have been provided with.`,
-    },
-];
+const APICallerLLMSystemContext: MessageInfo = {
+    role: "system",
+    content: "You are an ai tool agent that executes API calls to get the necessary functions. If all the data is already available as per the system description, then no API calling is needed" +
+        "If system context is enough, you do not need to execute the tools.",   
+}
+
+const GenUILLMSystemContext: MessageInfo = {
+    role: "system",
+    content: "You will look at all the json responses and the predefined schemas and decide which types of chart are more suitable for displaying (Choose 1-3 of them).",
+}
 
 async function agent(openai: OpenAI, userInput: string) {
-    messages.push({
-      role: "user",
-      content: userInput,
+
+    var APICallerAgentMemory = [];
+    APICallerAgentMemory.push(APICallerLLMSystemContext);
+    APICallerAgentMemory.push({
+        role: "user",
+        content: userInput,
     });
+    var APIResponsesMemory = [];
 
-    for (let i = 0; i < 5; i++) {
-        const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: messages,
-        tools: toolsDescription,
+    for (let i = 0; i < 20; i++) {
+        const response: any = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: APICallerAgentMemory,
+            tools: APICallerToolsDescription,
         });
-
-        console.log(response);
+        console.log(APICallerAgentMemory.length);
         const { finish_reason, message } = response.choices[0]; 
         if (finish_reason === "tool_calls" && message.tool_calls) {  
-            const functionName = message.tool_calls[0].function.name;  
-            const functionToCall = availableTools[functionName];  
+            const functionName: any = message.tool_calls[0].function.name;  
+            const functionToCall = APICallerAvailableTools[functionName];  
             const functionArgs = JSON.parse(message.tool_calls[0].function.arguments);  
             const functionArgsArr = Object.values(functionArgs);  
-            const functionResponse = await functionToCall.apply(null, functionArgsArr);  
-            messages.push({
-                role: "function",
+            const functionResponse: any = await functionToCall.apply(null, functionArgsArr);  
+            APICallerAgentMemory.push({
+                role: "system",
                 name: functionName,
-                content: `The result of the last function was this: ${JSON.stringify(
-                functionResponse
-                )}
-                `,
+                content: functionResponse["description"],
             });
+            APIResponsesMemory.push({
+                role: "system",
+                name: functionName,
+                content: JSON.stringify(functionResponse["result"]),
+            });
+            console.log(functionResponse["description"])
         } else if (finish_reason === "stop") {
-            messages.push(message);
-            return new Response(JSON.stringify(message.content));
+            APICallerAgentMemory.push(message);
+            break;
+            //return new Response(JSON.stringify(message.content));
         }
     }
-    return new Response(JSON.stringify(""))
+
+    console.log(APIResponsesMemory);
+
+    var GenUIAgentMemory = [];
+    GenUIAgentMemory.push(GenUILLMSystemContext);
+    GenUIAgentMemory.push({
+        role: "user",
+        content: JSON.stringify(APIResponsesMemory),
+    });
+    APIResponsesMemory.forEach(response => {
+        GenUIAgentMemory.push(response);
+    });
+
+    var finalResult : ReturnResponse = new ReturnResponse(Status.success, []);
+
+    for (let i = 0; i < 20; i++) {
+        const response: any = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: GenUIAgentMemory,
+            tools: GenUIToolsDescription,
+        });
+        const { finish_reason, message } = response.choices[0]; 
+        if (finish_reason === "tool_calls" && message.tool_calls) {  
+            const functionName: any = message.tool_calls[0].function.name;  
+            const functionToCall = GenUIAvailableTools[functionName];  
+            const functionArgs = JSON.parse(message.tool_calls[0].function.arguments);  
+            const functionArgsArr = Object.values(functionArgs);  
+            functionArgsArr.shift();
+            const functionResponse: any = await functionToCall.apply(null, [finalResult, functionArgsArr]);  
+            GenUIAgentMemory.push({
+                role: "system",
+                name: functionName,
+                content: JSON.stringify(functionResponse),
+            });
+        } else if (finish_reason === "stop") {
+            return new Response(JSON.stringify(finalResult));
+        }
+    }
+
+    return new Response(JSON.stringify(finalResult));
   }
 
 async function GET(req: Request): Promise<Response> {

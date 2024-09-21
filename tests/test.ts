@@ -7,11 +7,11 @@ async function test() {
         method: 'GET',
         path: '/ipfs/CID',
         queries: {
-            chatQuery: ["What is my location?"],
+            chatQuery: ["Show me the price table of ETH adn BTC"],
             // Choose from any model listed here https://platform.openai.com/docs/models
             model: ["gpt-4o"]
         },
-        secret: { redpillApiKey: 's' },
+        secret: { redpillApiKey: 'aaa' },
         headers: {},
     })
     console.log('GET RESULT:', JSON.parse(getResult))
