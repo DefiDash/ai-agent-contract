@@ -1,0 +1,5 @@
+# This directory is a Syncthing folder marker.
+# Do not delete.
+
+folderID: 99ica-dsepy
+created: 2024-09-22T01:57:35+08:00

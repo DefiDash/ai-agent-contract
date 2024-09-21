@@ -14,7 +14,6 @@
   },
   "devDependencies": {
     "@phala/fn": "^0.2.22",
-    "@types/express": "^4.17.21",
     "blakejs": "^1.2.1",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
@@ -25,9 +24,13 @@
     "wyhash": "^1.0.0"
   },
   "dependencies": {
-    "express": "^4.21.0",
+    "@langchain/anthropic": "^0.3.1",
+    "@langchain/community": "^0.3.1",
+    "@langchain/core": "^0.3.3",
+    "axios": "^1.7.7",
+    "graphql": "^16.9.0",
+    "graphql-tag": "^2.12.6",
     "langchain": "^0.3.2",
-    "openai": "^4.56.0",
     "viem": "^2.21.10"
   }
 }

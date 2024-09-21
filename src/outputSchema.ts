@@ -38,6 +38,35 @@ export class TableSchema extends Schema {
     }
 }
 
+/// The Price Dashboard that minimally displays the current price
+export class MinimalPriceDashboardSchema {
+    assetName: String;
+    price: number
+    changePercentage: number
+    constructor(assetName: String, price: number, changePercentage: number){
+        this.assetName = assetName
+        this.price = price
+        this.changePercentage = changePercentage
+    }
+}
+
+export class LinechartDatapoint{
+    x: string;
+    y: number;
+    constructor(x: string, y: number){
+        this.x = x;
+        this.y = y;
+    }
+}
+
+export class LinechartSchema{
+    type: string = "Linechart";
+    data: LinechartDatapoint[][];
+    constructor(data: LinechartDatapoint[][]){
+        this.data = data;
+    }
+}
+
 export enum Status {
     success = "success",
     error = "error"
