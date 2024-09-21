@@ -7,7 +7,7 @@ import { stringify } from 'querystring';
 
 export type Subgraph = 'curve' | 'uniswap';
 export type Condition = 'swap' | 'pool' | 'transaction';
-export type Metric = 'price' | 'tvl' | 'tx' | 'volume' | 'txCount';
+export type Metric = 'price' | 'tvl'  | 'volume' | 'txCount';
 
 interface Token {
     id: string;
@@ -68,7 +68,15 @@ function getQueryFragmentForUniswap(asset: string, metric: Metric, startTimestam
           pools(
           first: ${5},
           ){
-          txCount
+          token0 {
+            name
+            symbol
+            }
+            token1 {
+                name
+                symbol
+            }
+            txCount
         }
         `;
         default:
@@ -456,10 +464,39 @@ function parseAssetMetricsInput(jsonString: string): AssetMetricsInput {
         }
     )
     const response = await requestObject.json();
+
+    let resultString: string = "";
+    switch(input.metric) {
+        case 'txCount':
+            response.data.pools.forEach((pool: any) => {
+                resultString += "The transaction count of " + pool.txCount;
+            });
+            break;
+        case 'tvl':
+            for(const [key,value] of Object.entries(response.data)){
+                resultString += "The total value locked of " + key + " is " + (value as any).totalValueLocked;
+            }
+            break;
+        case 'price':
+            const data = processData(response.data, input.assets, input.metric);
+            for(const [key,value] of Object.entries(data)){
+                resultString += "The price of " + key + " is " + (value as any).price;
+            }
+            break;
+        case 'volume':
+            for(const [key,value] of Object.entries(response.data)){
+                resultString += "The volume of " + key + " is " + (value as any).volume;
+            }
+            break;
+    }
+
+    // if(input.metric=='tvl')
+    //     return processData(response.data, input.assets, input.metric);
     
-    if(input.metric=='price')
-        return processData(response.data, input.assets, input.metric);
-    return response.data.data
+    // if(input.metric=='price')
+    //     return processData(response.data, input.assets, input.metric);
+    //return response.data.data
+    return resultString;
 }
 
 interface APICallerExecutor{

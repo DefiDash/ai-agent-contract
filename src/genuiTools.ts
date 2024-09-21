@@ -23,6 +23,13 @@ const composeTableSchema = z.object({
     }))
 })
 
+const composeBarChart = z.object({
+    data: z.array(z.object({
+        x: z.string(),
+        y: z.number()
+    }))
+})
+
 const composeMinimalPriceDashboardTool = tool(
     async(input): Promise<object> => {
         return {
@@ -38,7 +45,7 @@ const composeMinimalPriceDashboardTool = tool(
     },
     {
         name: "composeMinimalPriceDashboard",
-        description: "creates a minimal dashboard that displays the assetName, price and change percentage. assetName = short form name of the crypto asset, price = current known price, change percentage = current known change percentage",
+        description: "creates a minimal dashboard that displays the assetName and its related price info. assetName = short form name of the crypto asset, price = current known price, change percentage = current known change percentage",
         schema: composeMinimalPriceDashboardSchema
     }
 )
