@@ -21,23 +21,36 @@ async function agent(openai: OpenAI, userInput: string) {
       role: "user",
       content: userInput,
     });
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: messages,
-      tools: toolsDescription,
-    });
-    console.log(response);
-    const { finish_reason, message } = response.choices[0]; 
-    if (finish_reason === "tool_calls" && message.tool_calls) {  
-        const functionName = message.tool_calls[0].function.name;  
-        const functionToCall = availableTools[functionName];  
-        const functionArgs = JSON.parse(message.tool_calls[0].function.arguments);  
-        const functionArgsArr = Object.values(functionArgs);  
-        const functionResponse = await functionToCall.apply(null, functionArgsArr);  
-        console.log(functionResponse);
-    }
 
-    return new Response(JSON.stringify(response))
+    for (let i = 0; i < 5; i++) {
+        const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: messages,
+        tools: toolsDescription,
+        });
+
+        console.log(response);
+        const { finish_reason, message } = response.choices[0]; 
+        if (finish_reason === "tool_calls" && message.tool_calls) {  
+            const functionName = message.tool_calls[0].function.name;  
+            const functionToCall = availableTools[functionName];  
+            const functionArgs = JSON.parse(message.tool_calls[0].function.arguments);  
+            const functionArgsArr = Object.values(functionArgs);  
+            const functionResponse = await functionToCall.apply(null, functionArgsArr);  
+            messages.push({
+                role: "function",
+                name: functionName,
+                content: `The result of the last function was this: ${JSON.stringify(
+                functionResponse
+                )}
+                `,
+            });
+        } else if (finish_reason === "stop") {
+            messages.push(message);
+            return new Response(JSON.stringify(message.content));
+        }
+    }
+    return new Response(JSON.stringify(""))
   }
 
 async function GET(req: Request): Promise<Response> {
