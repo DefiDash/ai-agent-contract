@@ -40,6 +40,7 @@ export class TableSchema extends Schema {
 
 /// The Price Dashboard that minimally displays the current price
 export class MinimalPriceDashboardSchema {
+    type: string = "MinimalPriceDashboard";
     assetName: String;
     price: number
     changePercentage: number
@@ -63,6 +64,23 @@ export class LinechartSchema{
     type: string = "Linechart";
     data: LinechartDatapoint[][];
     constructor(data: LinechartDatapoint[][]){
+        this.data = data;
+    }
+}
+
+export class BarChartDatapoint{
+    x: string;
+    y: number;
+    constructor(x: string, y: number){
+        this.x = x;
+        this.y = y;
+    }
+}
+
+export class BarChartSchema{
+    type: string = "BarChart";
+    data: BarChartDatapoint[][];
+    constructor(data: BarChartDatapoint[][]){
         this.data = data;
     }
 }

@@ -7,11 +7,11 @@ async function test() {
         method: 'GET',
         path: '/ipfs/CID',
         queries: {
-            chatQuery: ["Help me compare the price between WBTC and LINK"],
+            chatQuery: ["Help me compare the relationship between the Total Value Locked, Volume and the Price of UNI, LINK and AAVE using multiple types of chart"],
             // Choose from any model listed here https://platform.openai.com/docs/models
             model: ["gpt-4o"]
         },
-        secret: { claudeApiKey: 'AAA'},
+        secret: { claudeApiKey: 'aaa'},
         headers: {},
     })
     console.log('GET RESULT:', JSON.parse(getResult))

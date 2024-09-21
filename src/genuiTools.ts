@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
-import { DataColumn, LinechartSchema, MinimalPriceDashboardSchema, TableSchema } from "./outputSchema";
+import { BarChartSchema, DataColumn, LinechartSchema, MinimalPriceDashboardSchema, TableSchema } from "./outputSchema";
 
 const composeMinimalPriceDashboardSchema = z.object({
     assetName: z.string(),
@@ -86,10 +86,29 @@ const composeLinechartTool = tool(
     }
 )
 
+const composeBarChartTool = tool(
+    async(input): Promise<object> => {
+        return {
+            result: {
+                type: "object",
+                data: input.data,
+                description: "A bar chart has been created with the given data"
+            },
+            description: "A bar chart has been created with the given data"
+       }
+    },
+    {
+        name: "composeBarChart",
+        description: "creates a bar chart with the given data. The parameter is a multidimensional array where each array is a datapoint with x and y values",
+        schema: composeBarChart
+    }
+)
+
 export const GenUITools = [
     composeMinimalPriceDashboardTool,
     composeTableTool,
-    composeLinechartTool
+    composeLinechartTool,
+    composeBarChartTool
 ]
 
 function composeMinimalPriceDashboardExecutor(input: { assetName: string, price: number, changePercentage: number }){
@@ -108,6 +127,12 @@ function composeLinechartExecutor(input: { data: { x: string, y: number }[][] })
     return linechart;
 }
 
+function composeBarchartExecutor(input: { data: { x: string, y: number }[][] }){
+    console.log(input.data)
+    const barchart = new BarChartSchema(input.data);
+    return barchart;
+}
+
 export const GenUIToolsExecutor = [
     {
         name: "composeMinimalPriceDashboard",
@@ -123,5 +148,10 @@ export const GenUIToolsExecutor = [
         name: "composeLinechart",
         exec: composeLinechartExecutor,
         matcher: composeLinechartSchema
+    },
+    {
+        name: "composeBarChart",
+        exec: composeBarchartExecutor,
+        matcher: composeBarChart
     }
 ]

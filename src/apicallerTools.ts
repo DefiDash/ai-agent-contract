@@ -403,7 +403,7 @@ function parseAssetMetricsInput(jsonString: string): AssetMetricsInput {
         throw new Error('Invalid assets array');
     }
 
-    if (!['price', 'volume', 'marketCap'].includes(input.metric)) {
+    if (!['price', 'volume', 'tvl', 'txCount'].includes(input.metric)) {
         throw new Error('Invalid metric');
     }
 
@@ -469,23 +469,23 @@ function parseAssetMetricsInput(jsonString: string): AssetMetricsInput {
     switch(input.metric) {
         case 'txCount':
             response.data.pools.forEach((pool: any) => {
-                resultString += "The transaction count of " + pool.txCount;
+                resultString += "The transaction count of " + pool.txCount + " for the pool of " + pool.token0.name + " and " + pool.token1.name + "\n";
             });
             break;
         case 'tvl':
             for(const [key,value] of Object.entries(response.data)){
-                resultString += "The total value locked of " + key + " is " + (value as any).totalValueLocked;
+                resultString += "The total value locked of " + key + " is " + (value as any).totalValueLocked + "\n";
             }
             break;
         case 'price':
             const data = processData(response.data, input.assets, input.metric);
             for(const [key,value] of Object.entries(data)){
-                resultString += "The price of " + key + " is " + (value as any).price;
+                resultString += "The price of " + key + " is " + (value as any).price + "\n";
             }
             break;
         case 'volume':
             for(const [key,value] of Object.entries(response.data)){
-                resultString += "The volume of " + key + " is " + (value as any).volume;
+                resultString += "The volume of " + key + " is " + (value as any).volume + "\n";
             }
             break;
     }
