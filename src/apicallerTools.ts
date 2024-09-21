@@ -9,20 +9,6 @@ export type Subgraph = 'curve' | 'uniswap';
 export type Condition = 'swap' | 'pool' | 'transaction';
 export type Metric = 'price' | 'tvl'  | 'volume' | 'txCount';
 
-interface Token {
-    id: string;
-    symbol: string;
-    name: string;
-} 
-
-interface QueryOptions {
-    assets: string[];
-    metric: Metric;
-    startDate?: string;
-    endDate?: string;
-    subgraph?: Subgraph;
-}
-
 const SUBGRAPH_URLS: Record<Subgraph, string> = {
     curve: 'https://api.thegraph.com/subgraphs/name/curvefi/curve',
     uniswap: 'https://gateway.thegraph.com/api/02738ce46c23ea0b4fc6a8b084caec14/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV'
@@ -96,79 +82,79 @@ function generateUniswapQuery(assets: string[], metric: Metric, startTimestamp: 
 }
 
 const getConditionFragmentForUniswap = (
-condition: Condition,
-N: number,
-timestampStart: number,
-timestampEnd: number
+    condition: Condition,
+    N: number,
+    timestampStart: number,
+    timestampEnd: number
 ): string => {
-switch(condition) {
-    case 'pool':
-    return `pools(
-        first: ${N},
-        where: {createdAtBlockNumber_gte: "${timestampStart}", createdAtBlockNumber_lte: "${timestampEnd}"}
-        ){
-        token0Price
-        token1Price
-        token0 {
-            name
-            symbol
-        }
-        token1 {
-            name
-            symbol
-        }
-        txCount
-        volumeUSD
-        totalValueLockedUSD
-        }`
-
-    case 'swap':
-    return `swaps(
-                first: ${N},
-                where: {timestamp_lte: "${timestampEnd}", timestamp_gte: "${timestampStart}"}
+    switch(condition) {
+        case 'pool':
+        return `pools(
+            first: ${N},
+            where: {createdAtBlockNumber_gte: "${timestampStart}", createdAtBlockNumber_lte: "${timestampEnd}"}
             ){
-                amount0
-                amount1
-                amountUSD
-                token0 {
-                    name
-                    symbol
-                }
-                token1 {
-                    name
-                    symbol
-                }
-                transaction {
-                    gasPrice
+            token0Price
+            token1Price
+            token0 {
+                name
+                symbol
+            }
+            token1 {
+                name
+                symbol
+            }
+            txCount
+            volumeUSD
+            totalValueLockedUSD
+            }`
+
+        case 'swap':
+        return `swaps(
+                    first: ${N},
+                    where: {timestamp_lte: "${timestampEnd}", timestamp_gte: "${timestampStart}"}
+                ){
+                    amount0
+                    amount1
+                    amountUSD
+                    token0 {
+                        name
+                        symbol
+                    }
+                    token1 {
+                        name
+                        symbol
+                    }
+                    transaction {
+                        gasPrice
+                    }
+                }`
+        
+        case 'transaction':
+        return `
+            transactions(
+                first: ${N},
+                where: {timestamp_gte: "${timestampStart}", timestamp_lte: "${timestampEnd}"}
+            ){
+                gasPrice
+                gasUsed
+                swaps {
+                    amountUSD
+                    token0 {
+                        name
+                        symbol
+                        volumeUSD
+                    }
+                    token1 {
+                        name
+                        symbol
+                        volumeUSD
+                    }
                 }
             }`
-    
-    case 'transaction':
-    return `
-        transactions(
-            first: ${N},
-            where: {timestamp_gte: "${timestampStart}", timestamp_lte: "${timestampEnd}"}
-        ){
-            gasPrice
-            gasUsed
-            swaps {
-                amountUSD
-                token0 {
-                    name
-                    symbol
-                    volumeUSD
-                }
-                token1 {
-                    name
-                    symbol
-                    volumeUSD
-                }
-            }
-        }`
-    
-    default:
-    throw new Error(`Unsupported condition: ${condition}`);
-}
+        
+        default:
+        throw new Error(`Unsupported condition: ${condition}`);
+    }
 }
 
 function processData(data: any, assets: string[], metric: string) {
@@ -323,7 +309,7 @@ function parseGetAssetsWithInput(jsonString: string): getAssetsWithInput {
 // Get assets with a certain condition
 const getAssetsWith = async (
     jsonString: string
-  ) => {
+) => {
     const input: getAssetsWithInput = parseGetAssetsWithInput(jsonString);
     const timestampStart = Math.floor(new Date(input.dateStart).getTime() / 1000);
     console.log(input.dateStart);
