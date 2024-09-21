@@ -25,3 +25,4 @@ tmp
 logs
 secrets
 latestDeployment.json
+secrets/default.json
